@@ -1,26 +1,73 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'
 import Login from './pages/Login.jsx'
 import Registration from './pages/Registration.jsx'
+import Landing from './pages/Landing.jsx'
+import Home from './pages/Home.jsx'
+import About from './pages/About.jsx'
+import Contact from './pages/Contact.jsx'
+import Dashboard from './pages/Dashboard.jsx'
+import Apidemo from './pages/Apidemo.jsx'
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('register');
-  const [isLoggedIn,setIsLoggedIn] =useState(false);
-  const [isRegistered, setIsRegistered] = useState(false);
+  const [page, setPage] = useState("landing");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  return(
+  // session restore on refresh
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user && user.isLoggedIn) {
+      setIsLoggedIn(true);
+      setPage("dashboard"); // auto-redirect if logged in
+    }
+  }, []);
+
+  return (
     <div>
-      {currentPage ==="register" && <Registration />}
-      {currentPage === "login" && (isLoggedIn ? (
-         <h2>Welecome, User!</h2>
-      ) :(
-        <Login onLogin={() => setIsLoggedIn(true)} />
-      ))}
-      </div>
+      {page === "landing" && <Landing onNavigate={setPage} />}
+
+      {page === "home" && <Home />}
+      {page === "about" && <About />}
+      {page === "contact" && <Contact />}
+      {page === "api" && <Apidemo />}
+      {page === "register" && (
+        <Registration onRegisterSuccesful={() => setPage("login")} />
+      )}
+
+      {page === "login" && (
+        <Login
+          onLogin={() => {
+            setIsLoggedIn(true);
+            localStorage.setItem("user", JSON.stringify({ isLoggedIn: true }));
+            setPage("dashboard");
+          }}
+        />
+      )}
+
+      {/* 🔐 Protected Route */}
+      {page === "dashboard" && (
+        isLoggedIn ? (
+          <Dashboard
+            onLogout={() => {
+              setIsLoggedIn(false);
+              localStorage.removeItem("user");
+              setPage("login");
+            }}
+          />
+        ) : (
+          <Login
+            onLogin={() => {
+              setIsLoggedIn(true);
+              localStorage.setItem("user", JSON.stringify({ isLoggedIn: true }));
+              setPage("dashboard");
+            }}
+          />
+        )
+      )}
+
+      {/* Dev button */}
+      <button onClick={() => setPage("api")}>ApiDemo</button>
+    </div>
   );
 }
 
-
-export default App
+export default App;
